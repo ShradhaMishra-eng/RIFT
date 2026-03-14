@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VaidyaGen — Pharmacogenomics Risk Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* === THREE COLOUR PALETTE === */
+  /* 1. Near-Black (Charcoal) */
+  --ink:           #1c1c1e;
+  --ink-80:        #1c1c1ecc;
+  --ink-50:        #1c1c1e80;
+  --ink-20:        #1c1c1e33;
+  --ink-08:        #1c1c1e14;
+
+  /* 2. Warm Stone (Off-White) */
+  --stone:         #f5f0eb;
+  --stone-dark:    #ede6dd;
+  --stone-darker:  #ddd4c7;
+  --stone-white:   #faf8f5;
+
+  /* 3. Saffron Gold (Accent) */
+  --gold:          #c8862a;
+  --gold-dark:     #a06618;
+  --gold-light:    #c8862a1a;
+  --gold-mid:      #c8862a40;
+
+  /* Semantic aliases */
+  --bg:            var(--stone);
+  --surface:       var(--stone-white);
+  --surface2:      var(--stone-dark);
+  --border:        var(--stone-darker);
+  --text:          var(--ink);
+  --text-dim:      #3a3a3c;
+  --text-muted:    #6e6e73;
+  --accent:        var(--gold);
+  --accent-dark:   var(--gold-dark);
+  --accent-light:  var(--gold-light);
+
+  /* Semantic risk colours — kept monochromatic with ink/gold */
+  --safe:          #2e6b4a;
+  --safe-bg:       #ecf5f0;
+  --safe-border:   #a0c8b4;
+  --toxic:         #8b1a1a;
+  --toxic-bg:      #f7eaea;
+  --toxic-border:  #d4a0a0;
+  --warn:          var(--gold-dark);
+  --warn-bg:       var(--gold-light);
+  --warn-border:   var(--gold-mid);
+  --ineffective:   #3a3060;
+  --ineffective-bg:#eeedf7;
+  --ineffective-border:#b0aad8;
+  --unknown:       #3a3a3c;
+  --unknown-bg:    var(--stone-dark);
+  --unknown-border:var(--stone-darker);
+
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-mono:    "DM Mono", monospace;
+  --font-body:    "Outfit", sans-serif;
+  --shadow-sm:    0 1px 4px #1c1c1e18;
+  --shadow-md:    0 6px 20px #1c1c1e22;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-image:
+    radial-gradient(ellipse 60% 40% at 80% 20%, #c8862a0a 0%, transparent 70%),
+    radial-gradient(ellipse 40% 50% at 10% 80%, #1c1c1e08 0%, transparent 60%);
+}
+
+/* ── HEADER ── */
+header {
+  position: relative;
+  z-index: 10;
+  padding: 0 2.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 72px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.logo { display: flex; align-items: center; gap: 14px; }
+
+.logo-emblem {
+  width: 40px; height: 40px;
+  border: 1.5px solid var(--gold);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--gold);
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  background: var(--gold-light);
+  flex-shrink: 0;
+}
+
+.logo-text {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.logo-sub {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.header-right { display: flex; align-items: center; gap: 1.25rem; }
+
+.version-badge {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  padding: 4px 12px;
+  border-radius: 2px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.settings-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 7px 16px;
+  border-radius: 2px;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.02em;
+}
+.settings-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+/* ── HERO ── */
+.hero {
+  padding: 3rem 2.5rem 2rem;
+  max-width: 1340px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.hero-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.25em;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.hero-eyebrow::before {
+  content: "";
+  width: 24px; height: 1px;
+  background: var(--gold);
+}
+
+.hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 4.5vw, 3.6rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin-bottom: 0.9rem;
+}
+.hero-title em {
+  font-style: italic;
+  color: var(--gold);
+}
+
+.hero-desc {
+  font-size: 0.92rem;
+  color: var(--text-muted);
+  max-width: 520px;
+  line-height: 1.75;
+  font-weight: 400;
+}
+
+.gene-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 1.5rem; }
+
+.gene-chip {
+  font-family: "Poppins", sans-serif;
+  font-size: 0.62rem;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 2px;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  background: var(--surface);
+  letter-spacing: 0.04em;
+  transition: all 0.2s;
+}
+.gene-chip.active {
+  border-color: var(--gold);
+  color: var(--gold-dark);
+  background: var(--gold-light);
+  font-weight: 600;
+}
+
+/* ── LAYOUT ── */
+.app-layout {
+  display: grid;
+  grid-template-columns: 460px 1fr;
+  max-width: 1340px;
+  margin: 0 auto;
+  padding: 0 2.5rem 4rem;
+  gap: 0;
+}
+@media (max-width: 900px) { .app-layout { grid-template-columns: 1fr; } }
+
+.input-panel {
+  padding-right: 2.5rem;
+  border-right: 1px solid var(--border);
+}
+
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-label::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+
+/* ── DIVIDER ── */
+.panel-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 1.5rem 0;
+}
+
+/* ── UPLOAD ── */
+.upload-zone {
+  border: 1.5px dashed var(--stone-darker);
+  border-radius: 4px;
+  padding: 2.25rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s;
+  background: var(--stone-white);
+  margin-bottom: 1rem;
+  position: relative;
+}
+.upload-zone::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: 1px solid var(--stone-darker);
+  border-radius: 2px;
+  pointer-events: none;
+  opacity: 0.4;
+  transition: opacity 0.25s;
+}
+.upload-zone:hover, .upload-zone.dragover {
+  border-color: var(--gold);
+  background: var(--gold-light);
+}
+.upload-zone:hover::before { opacity: 0.8; border-color: var(--gold-mid); }
+
+.upload-icon {
+  width: 48px; height: 48px;
+  margin: 0 auto 1rem;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  background: var(--surface);
+  transition: all 0.25s;
+}
+.upload-zone:hover .upload-icon { border-color: var(--gold); color: var(--gold); }
+
+.upload-text {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text);
+  margin-bottom: 0.35rem;
+}
+.upload-hint { font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-muted); letter-spacing: 0.04em; }
+
+.file-loaded {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 0.75rem 1rem;
+  background: var(--safe-bg);
+  border: 1px solid var(--safe-border);
+  border-radius: 3px;
+  margin-top: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--safe);
+}
+.file-loaded.show { display: flex; }
+
+.sample-hint {
+  margin-top: 0.85rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+.sample-link { color: var(--gold-dark); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.sample-link:hover { color: var(--gold); }
+
+/* ── FORM ── */
+.form-group { margin-bottom: 1.25rem; }
+
+label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+input[type="text"] {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0.75rem 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--text);
+  transition: all 0.2s;
+  outline: none;
+}
+input[type="text"]:focus { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-mid); }
+input[type="text"]::placeholder { color: var(--text-muted); }
+
+.drug-presets { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 0.6rem; }
+
+.drug-preset {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  padding: 3px 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.02em;
+}
+.drug-preset:hover { border-color: var(--gold); color: var(--gold-dark); background: var(--gold-light); }
+
+.analyze-btn {
+  width: 100%;
+  padding: 0.9rem;
+  background: var(--ink);
+  border: none;
+  border-radius: 3px;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--stone-white);
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: all 0.2s;
+  margin-top: 0.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.analyze-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, #ffffff18 50%, transparent 100%);
+  transform: translateX(-100%);
+  transition: transform 0.5s ease;
+}
+.analyze-btn:hover { background: var(--gold-dark); }
+.analyze-btn:hover::after { transform: translateX(100%); }
+.analyze-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.analyze-btn:disabled::after { display: none; }
+
+.analyze-btn .btn-spinner {
+  display: none;
+  width: 18px; height: 18px;
+  border: 2px solid #ffffff40;
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin: 0 auto;
+}
+.analyze-btn.loading .btn-text { display: none; }
+.analyze-btn.loading .btn-spinner { display: block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: var(--ink-50);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2rem;
+  width: 460px;
+  max-width: 90vw;
+  box-shadow: var(--shadow-md);
+}
+
+.modal-header {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.35rem;
+  margin-bottom: 1.5rem;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.modal-footer { margin-top: 1.5rem; display: flex; gap: 10px; justify-content: flex-end; }
+
+.btn-secondary {
+  padding: 0.6rem 1.2rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  border-radius: 3px;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-secondary:hover { border-color: var(--ink); color: var(--ink); }
+
+.btn-primary {
+  padding: 0.6rem 1.4rem;
+  background: var(--ink);
+  border: none;
+  color: var(--stone-white);
+  border-radius: 3px;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.03em;
+}
+.btn-primary:hover { background: var(--gold-dark); }
+
+/* ── RESULTS PANEL ── */
+.results-panel { padding-left: 2.5rem; }
+
+.results-empty {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  height: 420px; text-align: center; gap: 1rem;
+}
+
+.empty-graphic {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted);
+}
+.empty-text {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+.empty-hint { font-size: 0.82rem; color: var(--text-muted); max-width: 270px; line-height: 1.65; }
+
+.results-area { display: none; }
+.results-area.show { display: block; }
+
+/* ── RISK HERO ── */
+.risk-hero {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1.5rem;
+  align-items: center;
+  padding: 1.5rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  background: var(--surface);
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+.risk-hero.Toxic       { border-left-color: var(--toxic);       background: var(--toxic-bg); }
+.risk-hero.Safe        { border-left-color: var(--safe);        background: var(--safe-bg); }
+.risk-hero.adjust      { border-left-color: var(--warn);        background: var(--warn-bg); }
+.risk-hero.Ineffective { border-left-color: var(--ineffective); background: var(--ineffective-bg); }
+.risk-hero.Unknown     { border-left-color: var(--unknown);     background: var(--unknown-bg); }
+
+.risk-gauge { width: 88px; height: 88px; position: relative; flex-shrink: 0; }
+.risk-gauge svg { transform: rotate(-90deg); }
+.risk-gauge .gauge-bg   { fill: none; stroke: var(--border); stroke-width: 5; }
+.risk-gauge .gauge-fill { fill: none; stroke-width: 5; stroke-linecap: round; transition: stroke-dashoffset 1s ease; }
+.risk-gauge-label {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  font-family: var(--font-mono);
+}
+.risk-pct { font-size: 1rem; font-weight: 500; color: var(--ink); }
+.risk-meta { flex: 1; }
+
+.risk-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.35rem;
+}
+
+.risk-dot { width: 8px; height: 8px; border-radius: 50%; animation: pulse-dot 2s infinite; }
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.45; transform: scale(1.4); }
+}
+.risk-drug-line {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  letter-spacing: 0.03em;
+}
+.risk-variants-count {
+  margin-top: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+/* ── GENE CARDS ── */
+.gene-results-grid { display: flex; flex-direction: column; gap: 0.85rem; margin-bottom: 1.5rem; }
+
+.gene-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
+  border-radius: 4px;
+  padding: 1.25rem;
+  animation: slideUp 0.4s ease both;
+  box-shadow: var(--shadow-sm);
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.gene-card.Toxic       { border-left-color: var(--toxic); }
+.gene-card.Safe        { border-left-color: var(--safe); }
+.gene-card.Adjust,
+.gene-card.adjust      { border-left-color: var(--warn); }
+.gene-card.Ineffective { border-left-color: var(--ineffective); }
+.gene-card.Unknown     { border-left-color: var(--unknown); }
+
+.gene-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 0.65rem;
+}
+.gene-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.gene-risk-tag {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  padding: 3px 10px;
+  border-radius: 2px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  border: 1px solid;
+  text-transform: uppercase;
+}
+.tag-Toxic       { background: var(--toxic-bg);       color: var(--toxic);       border-color: var(--toxic-border); }
+.tag-Safe        { background: var(--safe-bg);        color: var(--safe);        border-color: var(--safe-border); }
+.tag-Adjust      { background: var(--warn-bg);        color: var(--warn);        border-color: var(--warn-border); }
+.tag-Ineffective { background: var(--ineffective-bg); color: var(--ineffective); border-color: var(--ineffective-border); }
+.tag-Unknown     { background: var(--unknown-bg);     color: var(--unknown);     border-color: var(--unknown-border); }
+
+.gene-phenotype {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--gold-dark);
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.03em;
+}
+
+.gene-star-alleles { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 0.7rem; }
+.star-allele-chip {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  padding: 2px 8px;
+  background: var(--gold-light);
+  border: 1px solid var(--gold-mid);
+  border-radius: 2px;
+  color: var(--gold-dark);
+}
+
+.gene-rec {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  line-height: 1.65;
+  padding: 0.75rem;
+  background: var(--surface2);
+  border-radius: 3px;
+  border-left: 2px solid var(--border);
+  font-weight: 400;
+}
+
+/* ── AI EXPLANATION ── */
+.explanation-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1.35rem;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+.explanation-header {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+.ai-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--gold-light);
+  border: 1px solid var(--gold-mid);
+  border-radius: 2px;
+  padding: 2px 8px;
+  font-size: 0.58rem;
+  color: var(--gold-dark);
+  letter-spacing: 0.1em;
+  font-weight: 500;
+}
+.ai-dot { width: 5px; height: 5px; background: var(--gold); border-radius: 50%; animation: pulse-dot 1.5s infinite; }
+.explanation-text {
+  font-size: 0.86rem;
+  line-height: 1.8;
+  color: var(--text-dim);
+  white-space: pre-wrap;
+  font-weight: 400;
+}
+
+/* ── VARIANTS TABLE ── */
+.variants-table-wrap { margin-bottom: 1.5rem; }
+.variants-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  background: var(--surface);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+.variants-table th {
+  text-align: left;
+  padding: 0.65rem 0.85rem;
+  color: var(--text-muted);
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 0.6rem;
+}
+.variants-table td {
+  padding: 0.65rem 0.85rem;
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--ink-08);
+  white-space: nowrap;
+}
+.variants-table tr:last-child td { border-bottom: none; }
+.variants-table tr:hover td { background: var(--stone-dark); }
+.td-gene { color: var(--gold-dark); font-weight: 600; }
+.td-star { color: var(--ink); font-weight: 500; }
+.td-rs   { color: var(--text-muted); }
+
+/* ── HISTORY ── */
+.history-section { margin-top: 2rem; }
+.history-list { display: flex; flex-direction: column; gap: 6px; margin-top: 0.75rem; }
+
+.history-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.7rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.18s;
+  gap: 10px;
+  box-shadow: var(--shadow-sm);
+}
+.history-item:hover { border-color: var(--gold); }
+.hist-drug {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.hist-meta { font-family: var(--font-mono); font-size: 0.62rem; color: var(--text-muted); margin-top: 2px; }
+.hist-risk {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  padding: 2px 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  border: 1px solid;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 2rem; right: 2rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
+  border-radius: 3px;
+  padding: 1rem 1.5rem;
+  font-size: 0.83rem;
+  color: var(--text);
+  z-index: 9999;
+  transform: translateY(100px);
+  opacity: 0;
+  transition: all 0.3s;
+  max-width: 340px;
+  box-shadow: var(--shadow-md);
+  font-family: var(--font-body);
+}
+.toast.show    { transform: translateY(0); opacity: 1; }
+.toast.error   { border-left-color: var(--toxic); }
+.toast.success { border-left-color: var(--safe); }
+
+/* ── LOADING OVERLAY ── */
+.loading-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: #f5f0ebcc;
+  z-index: 500;
+  align-items: center; justify-content: center;
+  flex-direction: column; gap: 1.5rem;
+}
+.loading-overlay.show { display: flex; }
+
+.loading-dna { display: flex; gap: 5px; align-items: flex-end; }
+.loading-dna span {
+  width: 3px; border-radius: 2px;
+  background: var(--ink);
+  animation: dna-wave 1s ease-in-out infinite;
+}
+.loading-dna span:nth-child(1) { height: 18px; animation-delay: 0.0s; }
+.loading-dna span:nth-child(2) { height: 32px; animation-delay: 0.1s; }
+.loading-dna span:nth-child(3) { height: 46px; animation-delay: 0.2s; }
+.loading-dna span:nth-child(4) { height: 32px; animation-delay: 0.3s; }
+.loading-dna span:nth-child(5) { height: 18px; animation-delay: 0.4s; }
+.loading-dna span:nth-child(6) { height: 32px; animation-delay: 0.3s; }
+.loading-dna span:nth-child(7) { height: 46px; animation-delay: 0.2s; }
+.loading-dna span:nth-child(8) { height: 32px; animation-delay: 0.1s; }
+.loading-dna span:nth-child(9) { height: 18px; animation-delay: 0.0s; }
+@keyframes dna-wave {
+  0%, 100% { transform: scaleY(1); opacity: 0.25; }
+  50%       { transform: scaleY(0.35); opacity: 1; }
+}
+.loading-text {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* ── FOOTER RULE ── */
+.gold-rule {
+  width: 40px; height: 2px;
+  background: var(--gold);
+  margin: 0.35rem 0 1.5rem;
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-emblem">वै</div>
+    <div>
+      <div class="logo-text">VaidyaGen</div>
+      <div class="logo-sub">Pharmacogenomics Engine · CPIC 2024</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="version-badge">v1.0 · Clinical</div>
+    <button class="settings-btn" onclick="openSettings()">⚙ Settings</button>
+  </div>
+</header>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow">AI-Powered Clinical Decision Support</div>
+  <h1 class="hero-title">Personalised Drug Risk<br>from <em>Genetic Variants</em></h1>
+  <div class="gold-rule"></div>
+  <p class="hero-desc">Upload a patient VCF file and specify a drug to receive personalised pharmacogenomic risk stratification and CPIC-aligned dosing recommendations.</p>
+  <div class="gene-chips">
+    <div class="gene-chip active" id="chip-CYP2D6">CYP2D6</div>
+    <div class="gene-chip active" id="chip-CYP2C19">CYP2C19</div>
+    <div class="gene-chip active" id="chip-CYP2C9">CYP2C9</div>
+    <div class="gene-chip active" id="chip-SLCO1B1">SLCO1B1</div>
+    <div class="gene-chip active" id="chip-TPMT">TPMT</div>
+    <div class="gene-chip active" id="chip-DPYD">DPYD</div>
+  </div>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div class="app-layout">
+
+  <!-- LEFT: INPUT PANEL -->
+  <div class="input-panel">
+
+    <div class="section-label">Patient VCF File</div>
+
+    <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()"
+         ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+      <div class="upload-icon">
+        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <path d="M7 18a4 4 0 01-4-4 4 4 0 014-4 5 5 0 019.9-1A4 4 0 0120 13a3 3 0 010 6H7z"/>
+          <path d="M12 11v8M9 14l3-3 3 3"/>
+        </svg>
+      </div>
+      <div class="upload-text">Drop VCF file or click to browse</div>
+      <div class="upload-hint">.vcf format · VCF v4.2 · Up to 5 MB</div>
+    </div>
+    <input type="file" id="fileInput" accept=".vcf" style="display:none" onchange="handleFileSelect(event)">
+
+    <div class="file-loaded" id="fileLoaded">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M9 12l2 2 4-4M12 3l9 5.5v7L12 21l-9-5.5v-7L12 3z"/>
+      </svg>
+      <span id="fileLoadedName">patient.vcf loaded</span>
+    </div>
+
+    <div class="sample-hint">
+      No file? <span class="sample-link" onclick="loadSampleVCF()">Load sample patient data</span>
+    </div>
+
+    <div class="panel-divider"></div>
+    <div class="section-label">Analysis Parameters</div>
+
+    <div class="form-group">
+      <label>Drug Name</label>
+      <input type="text" id="drugInput" placeholder="e.g. codeine, warfarin, clopidogrel…">
+      <div class="drug-presets">
+        <button class="drug-preset" onclick="setDrug('codeine')">Codeine</button>
+        <button class="drug-preset" onclick="setDrug('warfarin')">Warfarin</button>
+        <button class="drug-preset" onclick="setDrug('clopidogrel')">Clopidogrel</button>
+        <button class="drug-preset" onclick="setDrug('tamoxifen')">Tamoxifen</button>
+        <button class="drug-preset" onclick="setDrug('azathioprine')">Azathioprine</button>
+        <button class="drug-preset" onclick="setDrug('fluorouracil')">Fluorouracil</button>
+        <button class="drug-preset" onclick="setDrug('simvastatin')">Simvastatin</button>
+        <button class="drug-preset" onclick="setDrug('escitalopram')">Escitalopram</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Patient ID</label>
+      <input type="text" id="patientInput" placeholder="e.g. P001" value="P001">
+    </div>
+
+    <button class="analyze-btn" id="analyzeBtn" onclick="runAnalysis()">
+      <span class="btn-text">Analyse Pharmacogenomic Risk</span>
+      <div class="btn-spinner"></div>
+    </button>
+
+    <!-- HISTORY -->
+    <div class="history-section">
+      <div class="section-label">Recent Analyses</div>
+      <div class="history-list" id="historyList">
+        <div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-muted);padding:1rem 0;text-align:center;letter-spacing:0.05em;">
+          No analyses yet
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT: RESULTS PANEL -->
+  <div class="results-panel">
+
+    <div class="section-label">Analysis Results</div>
+
+    <!-- EMPTY STATE -->
+    <div class="results-empty" id="resultsEmpty">
+      <div class="empty-graphic">
+        <svg width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
+        </svg>
+      </div>
+      <div class="empty-text">No analysis yet</div>
+      <div class="empty-hint">Upload a VCF file and enter a drug name to generate a personalised pharmacogenomic risk report.</div>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="results-area" id="resultsArea">
+
+      <!-- RISK HERO -->
+      <div class="risk-hero" id="riskHero">
+        <div class="risk-gauge" id="riskGauge">
+          <svg viewBox="0 0 88 88" width="88" height="88">
+            <circle class="gauge-bg" cx="44" cy="44" r="37"/>
+            <circle class="gauge-fill" id="gaugeFill" cx="44" cy="44" r="37"
+                    stroke-dasharray="233" stroke-dashoffset="233"/>
+          </svg>
+          <div class="risk-gauge-label">
+            <span class="risk-pct" id="riskPct">0%</span>
+          </div>
+        </div>
+        <div class="risk-meta">
+          <div class="risk-badge">
+            <div class="risk-dot" id="riskDot"></div>
+            <span id="riskLabel">—</span>
+          </div>
+          <div class="risk-drug-line">Drug: <strong id="riskDrug">—</strong> · Patient: <strong id="riskPatient">—</strong></div>
+          <div class="risk-variants-count" id="riskVariantsCount">—</div>
+        </div>
+      </div>
+
+      <!-- GENE RESULTS -->
+      <div class="section-label">Gene-Specific Findings</div>
+      <div class="gene-results-grid" id="geneResultsGrid"></div>
+
+      <!-- AI EXPLANATION -->
+      <div class="explanation-card" id="explanationCard">
+        <div class="explanation-header">
+          <span class="ai-badge"><div class="ai-dot"></div> Claude AI</span>
+          Clinical Interpretation
+        </div>
+        <div class="explanation-text" id="explanationText">—</div>
+      </div>
+
+      <!-- VARIANTS TABLE -->
+      <div class="variants-table-wrap">
+        <div class="section-label">Detected Variants</div>
+        <table class="variants-table">
+          <thead>
+            <tr>
+              <th>Gene</th>
+              <th>Star Allele</th>
+              <th>RS ID</th>
+              <th>Position</th>
+              <th>Ref/Alt</th>
+              <th>Genotype</th>
+            </tr>
+          </thead>
+          <tbody id="variantsTableBody"></tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <div class="modal-header">Settings</div>
+
+    <div class="form-group">
+      <label>Anthropic API Key (for AI Explanations)</label>
+      <input type="text" id="apiKeyInput" placeholder="sk-ant-…">
+      <div style="margin-top:0.5rem;font-size:0.72rem;color:var(--text-muted);font-family:var(--font-mono);line-height:1.6;">
+        Used only to call Claude API for clinical explanations. Stored in localStorage only.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Backend URL</label>
+      <input type="text" id="backendUrl" value="http://localhost:8080">
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeSettings()">Cancel</button>
+      <button class="btn-primary" onclick="saveSettings()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-dna">
+    <span></span><span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span><span></span>
+  </div>
+  <div class="loading-text" id="loadingText">Parsing genomic variants…</div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+let vcfContent = null;
+let vcfFilename = null;
+
+const RISK_COLORS = {
+  'Safe':           '#2e6b4a',
+  'Adjust Dosage':  '#a06618',
+  'Toxic':          '#8b1a1a',
+  'Ineffective':    '#3a3060',
+  'Unknown':        '#3a3a3c'
+};
+
+const SAMPLE_VCF = `##fileformat=VCFv4.2
+##fileDate=20240101
+##source=VaidyaGenSampleData
+##INFO=<ID=GENE,Number=1,Type=String,Description="Gene name">
+##INFO=<ID=STAR,Number=1,Type=String,Description="Star allele">
+##INFO=<ID=RS,Number=1,Type=String,Description="dbSNP RS ID">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE
+chr22\t42522613\trs3892097\tC\tT\t100\tPASS\tGENE=CYP2D6;STAR=*4;RS=rs3892097\tGT\t0/1
+chr10\t94781859\trs4244285\tG\tA\t100\tPASS\tGENE=CYP2C19;STAR=*2;RS=rs4244285\tGT\t0/1
+chr10\t96741053\trs1799853\tC\tT\t100\tPASS\tGENE=CYP2C9;STAR=*2;RS=rs1799853\tGT\t0/1
+chr12\t21331549\trs4149056\tT\tC\t100\tPASS\tGENE=SLCO1B1;STAR=*5;RS=rs4149056\tGT\t0/1`;
+
+function loadSampleVCF() {
+  vcfContent = SAMPLE_VCF;
+  vcfFilename = 'sample_patient.vcf';
+  document.getElementById('fileLoaded').classList.add('show');
+  document.getElementById('fileLoadedName').textContent = 'sample_patient.vcf loaded';
+  showToast('Sample VCF loaded — try codeine, warfarin or clopidogrel', 'success');
+}
+
+function handleFileSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (!file.name.endsWith('.vcf')) { showToast('Please upload a .vcf file', 'error'); return; }
+  if (file.size > 5 * 1024 * 1024) { showToast('File too large (max 5 MB)', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    vcfContent = e.target.result;
+    vcfFilename = file.name;
+    document.getElementById('fileLoaded').classList.add('show');
+    document.getElementById('fileLoadedName').textContent = `${file.name} (${(file.size/1024).toFixed(1)} KB)`;
+    showToast('VCF file loaded successfully', 'success');
+  };
+  reader.readAsText(file);
+}
+
+function handleDragOver(e) { e.preventDefault(); document.getElementById('uploadZone').classList.add('dragover'); }
+function handleDragLeave(e) { document.getElementById('uploadZone').classList.remove('dragover'); }
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('uploadZone').classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) handleFileSelect({ target: { files: [file] } });
+}
+
+function setDrug(name) {
+  document.getElementById('drugInput').value = name;
+  document.getElementById('drugInput').focus();
+}
+
+async function runAnalysis() {
+  if (!vcfContent) { showToast('Please upload a VCF file first', 'error'); return; }
+  const drug = document.getElementById('drugInput').value.trim();
+  if (!drug) { showToast('Please enter a drug name', 'error'); return; }
+
+  const apiKey    = localStorage.getItem('vaidyagen_api_key') || '';
+  const backendUrl = localStorage.getItem('vaidyagen_backend') || 'http://localhost:8080';
+  const patientId  = document.getElementById('patientInput').value.trim() || 'P001';
+
+  const btn = document.getElementById('analyzeBtn');
+  btn.classList.add('loading');
+  btn.disabled = true;
+  showLoading('Parsing genomic variants…');
+
+  try {
+    const formData = new FormData();
+    const blob = new Blob([vcfContent], { type: 'text/plain' });
+    formData.append('vcf', blob, vcfFilename || 'patient.vcf');
+    formData.append('drug', drug);
+    formData.append('patient_id', patientId);
+    formData.append('api_key', apiKey);
+
+    setTimeout(() => setLoadingText('Identifying pharmacogenomic variants…'), 800);
+    setTimeout(() => setLoadingText('Calculating drug risk score…'), 1600);
+    setTimeout(() => setLoadingText('Generating clinical interpretation…'), 2400);
+
+    const response = await fetch(`${backendUrl}/api/analyze`, { method: 'POST', body: formData });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'Analysis failed');
+
+    renderResults(result);
+    loadHistory();
+    showToast(`Analysis complete — Risk: ${result.risk}`, 'success');
+  } catch (err) {
+    showToast(`Error: ${err.message}`, 'error');
+    console.error(err);
+  } finally {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+    hideLoading();
+  }
+}
+
+function renderResults(data) {
+  document.getElementById('resultsEmpty').style.display = 'none';
+  document.getElementById('resultsArea').classList.add('show');
+
+  const score = data.risk_score || 0;
+  const color = RISK_COLORS[data.risk] || '#3a3a3c';
+  const circumference = 233;
+  const offset = circumference - (circumference * score);
+
+  const fill = document.getElementById('gaugeFill');
+  fill.style.stroke = color;
+  fill.style.strokeDashoffset = circumference;
+  setTimeout(() => { fill.style.strokeDashoffset = offset; }, 100);
+
+  document.getElementById('riskPct').textContent = Math.round(score * 100) + '%';
+  document.getElementById('riskLabel').textContent = data.risk;
+  document.getElementById('riskLabel').style.color = color;
+  document.getElementById('riskDot').style.background = color;
+  document.getElementById('riskDrug').textContent = data.drug;
+  document.getElementById('riskPatient').textContent = data.patient_id;
+  document.getElementById('riskVariantsCount').textContent =
+    `${data.variants_count} variant${data.variants_count !== 1 ? 's' : ''} detected across ${data.gene_results?.length || 0} gene${(data.gene_results?.length || 0) !== 1 ? 's' : ''}`;
+
+  const hero = document.getElementById('riskHero');
+  hero.className = 'risk-hero';
+  if (data.risk === 'Adjust Dosage') hero.classList.add('adjust');
+  else hero.classList.add(data.risk);
+
+  const activeGenes = new Set((data.gene_results || []).map(g => g.gene));
+  document.querySelectorAll('.gene-chip').forEach(chip => {
+    const g = chip.id.replace('chip-', '');
+    chip.classList.toggle('active', activeGenes.has(g));
+  });
+
+  const grid = document.getElementById('geneResultsGrid');
+  grid.innerHTML = '';
+  (data.gene_results || []).forEach((gr, i) => {
+    const riskKey = gr.risk === 'Adjust Dosage' ? 'Adjust' : gr.risk;
+    const card = document.createElement('div');
+    card.className = `gene-card ${riskKey}`;
+    card.style.animationDelay = `${i * 0.08}s`;
+    card.innerHTML = `
+      <div class="gene-card-header">
+        <div class="gene-name">${gr.gene}</div>
+        <div class="gene-risk-tag tag-${riskKey}">${gr.risk}</div>
+      </div>
+      <div class="gene-phenotype">${gr.phenotype_desc || ''}</div>
+      ${gr.star_alleles?.length ? `<div class="gene-star-alleles">${gr.star_alleles.map(s => `<span class="star-allele-chip">${s}</span>`).join('')}</div>` : ''}
+      <div class="gene-rec">${gr.recommendation || ''}</div>
+    `;
+    grid.appendChild(card);
+  });
+
+  document.getElementById('explanationText').textContent = data.explanation || 'No explanation available.';
+
+  const tbody = document.getElementById('variantsTableBody');
+  tbody.innerHTML = '';
+  (data.variants || []).forEach(v => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="td-gene">${v.gene}</td>
+      <td class="td-star">${v.star_allele || '—'}</td>
+      <td class="td-rs">${v.rs_id || '—'}</td>
+      <td>${v.chromosome}:${v.position}</td>
+      <td>${v.ref}/${v.alt}</td>
+      <td>${v.genotype || '—'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+async function loadHistory() {
+  const backendUrl = localStorage.getItem('vaidyagen_backend') || 'http://localhost:8080';
+  try {
+    const res = await fetch(`${backendUrl}/api/history`);
+    const data = await res.json();
+    const list = document.getElementById('historyList');
+    if (!data.history?.length) {
+      list.innerHTML = `<div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-muted);padding:1rem 0;text-align:center;letter-spacing:0.05em;">No analyses yet</div>`;
+      return;
+    }
+    list.innerHTML = data.history.slice(0, 8).map(h => {
+      const rk = (h.risk_level || 'Unknown') === 'Adjust Dosage' ? 'Adjust' : (h.risk_level || 'Unknown');
+      const date = new Date(h.created_at).toLocaleString(undefined, {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+      return `<div class="history-item"><div><div class="hist-drug">${h.drug_name}</div><div class="hist-meta">${h.patient_id} · ${date}</div></div><div class="hist-risk tag-${rk}">${h.risk_level}</div></div>`;
+    }).join('');
+  } catch(e) {}
+}
+
+function openSettings() {
+  document.getElementById('apiKeyInput').value = localStorage.getItem('vaidyagen_api_key') || '';
+  document.getElementById('backendUrl').value = localStorage.getItem('vaidyagen_backend') || 'http://localhost:8080';
+  document.getElementById('settingsModal').classList.add('show');
+}
+function closeSettings() { document.getElementById('settingsModal').classList.remove('show'); }
+function saveSettings() {
+  localStorage.setItem('vaidyagen_api_key', document.getElementById('apiKeyInput').value.trim());
+  localStorage.setItem('vaidyagen_backend', document.getElementById('backendUrl').value.trim());
+  closeSettings();
+  showToast('Settings saved', 'success');
+}
+
+function showLoading(text) { document.getElementById('loadingText').textContent = text; document.getElementById('loadingOverlay').classList.add('show'); }
+function setLoadingText(text) { document.getElementById('loadingText').textContent = text; }
+function hideLoading() { document.getElementById('loadingOverlay').classList.remove('show'); }
+
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3800);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadHistory();
+  setInterval(loadHistory, 30000);
+});
+document.getElementById('settingsModal').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) closeSettings();
+});
+</script>
+</body>
+</html>
